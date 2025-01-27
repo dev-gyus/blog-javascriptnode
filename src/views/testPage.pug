@@ -1,0 +1,125 @@
+html
+  head
+    title 테스트 페이지
+  body
+    h1 소켓 테스트 페이지입니다.
+    div
+      input#userId(type="text" name="userId" placeholder="유저 id 입력")
+      input#roomId(type="text" name="roomId" placeholder="채팅방 번호 입력")
+      button#connectionButton(onclick="addSocket()") 채팅방 입장
+      br
+      br
+
+      input#msg(type="text" name="msg" placeholder="메시지 입력")
+      button#sendMsgButton(onclick="sendMsg()") 메시지 전송
+
+script(src="http://localhost:5500/socket.io/socket.io.js")
+//script.
+//  const uri = 'url'
+//  const token = 'token-for-client'
+//  let socket = null
+//  function roomIn(){
+//    // 소켓이 이미 존재하면 더이상 처리 안함
+//    if (socket) return;
+//    // roomId 조회
+//    const roomId = document.getElementById('roomId').value;
+//    // userId 조회
+//    const userId = document.getElementById('userId').value;
+//    // socket 연결
+//    socket = io(uri, {
+//      transports: ["websocket"],
+//      auth: {
+//        token
+//      },
+//      query: {
+//        roomId,
+//        userId
+//      }
+//    });
+//    let connectSuccess = true;
+//    // 소켓 연결중 에러 이벤트 발생시
+//    socket.on('connect_error', (err) => {
+//      console.log(`socket connection error: ${err}`);
+//      connectSuccess = false;
+//    })
+//    if (connectSuccess) {
+//      console.log(`소켓연결완료`);
+//    }
+//    // 서버에서 entireMsg 이벤트가 오면 어떻게 처리할지에 대한 핸들러 정의
+//    socket.on('entireMsg', async (jsonData) => {
+//      const objData = JSON.parse(jsonData);
+//      console.log(`entireMsg:${objData.msg}`);
+//    })
+//  }
+//
+//  // entireMsg 이벤트를 서버로 전송
+//  function sendMsg() {
+//    if (!socket) alert('소켓 연결을 먼저 해 주세요');
+//    const msg = document.getElementById('msg').value;
+//    const data = {
+//      msg
+//    }
+//    socket.emit('entireMsg', JSON.stringify(data));
+//    document.getElementById('msg').value = '';
+//  }
+
+script.
+  const uri = 'url'
+  const token = 'token-for-client'
+  let sockets = []
+  function addSocket(){
+    for(let i = 0; i < 100; i++) {
+      console.log(`i=${i}`);
+      roomIn(i);
+    }
+  }
+  function roomIn(userId){
+    // 소켓이 10개가 넘어가면 더이상 추가 안함
+    if (sockets.length > 100) return;
+    // roomId 조회
+    const roomId = document.getElementById('roomId').value;
+    // socket 연결
+    socket = io(uri, {
+      transports: ["websocket"],
+      auth: {
+        token
+      },
+      query: {
+        roomId,
+        userId
+      }
+    });
+    let connectSuccess = true;
+    // 소켓 연결중 에러 이벤트 발생시
+    socket.on('connect_error', (err) => {
+      console.log(`socket connection error: ${err}`);
+      connectSuccess = false;
+    })
+    if (connectSuccess) {
+      console.log(`소켓연결완료. userId:${userId}`);
+    }
+    // 서버에서 entireMsg 이벤트가 오면 어떻게 처리할지에 대한 핸들러 정의
+    // socket.on('entireMsg', async (jsonData) => {
+    //   const objData = JSON.parse(jsonData);
+      // console.log(`entireMsg:${objData.msg}`);
+    // });
+    sockets.push(socket);
+  }
+
+  // entireMsg 이벤트를 연결한 소켓들을 순회하면서 전송
+  function sendMsg() {
+    if (sockets.length < 1) alert('소켓 연결을 먼저 해 주세요');
+    const msg = document.getElementById('msg').value;
+    const data = {
+      msg
+    }
+    setInterval(() => repeatMsg(data), 500);
+  }
+
+  function repeatMsg(data) {
+    console.log(`msg발송`);
+    for (let socket of sockets) {
+      socket.emit('entireMsg', JSON.stringify(data));
+      document.getElementById('msg').value = '';
+    }
+  }
