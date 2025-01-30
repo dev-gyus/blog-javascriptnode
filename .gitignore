@@ -1,2 +1,6 @@
 /.env.dev
 /.env.prod
+/dist/
+/node_modules/
+/.idea/
+/dist.zip
